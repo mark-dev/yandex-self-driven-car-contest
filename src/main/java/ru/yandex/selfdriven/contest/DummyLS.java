@@ -1,5 +1,9 @@
 package ru.yandex.selfdriven.contest;
 
+//https://www.ilikebigbits.com/2015_03_04_plane_from_points.html
+// Метод наименьших квадратов
+// Но это не будет работать. Т.к. в процессе учитываются все точки - а у нас заранее известно что много шума будет.
+// И есть доп условие на input.p, которое здесь никак не учитывается.
 public class DummyLS {
     public double[] lsq(Main.LidarInputContainer input) {
 

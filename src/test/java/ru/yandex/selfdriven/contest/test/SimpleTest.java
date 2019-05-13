@@ -4,44 +4,53 @@ import org.junit.Assert;
 import org.junit.Test;
 import ru.yandex.selfdriven.contest.Main;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+
+import static ru.yandex.selfdriven.contest.Main.RANSACSolution.planeThoughPoints;
+
 public class SimpleTest {
+    private Path basePath = Paths.get("/home/mark/code/opensource/yandex-self-driven-car-contest/src/main/resources");
+
+
     @Test
     public void test1() throws Exception {
-        processFile("E:\\Developing\\IdeaProjects\\self-driving-car\\src\\main\\resources\\input1.txt");
+        processFileAndValidateResult(basePath.resolve("input1.txt"));
     }
 
     @Test
     public void test2() throws Exception {
-        processFile("E:\\Developing\\IdeaProjects\\self-driving-car\\src\\main\\resources\\input2.txt");
+        processFileAndValidateResult(basePath.resolve("input2.txt"));
     }
 
     @Test
     public void test3() throws Exception {
-        processFile("E:\\Developing\\IdeaProjects\\self-driving-car\\src\\main\\resources\\input3.txt");
+        processFileAndValidateResult(basePath.resolve("input3.txt"));
     }
 
-    public void processFile(String filePath) throws Exception {
-        Main.LidarInputContainer lidarInputContainer = Main.readLidarInputFile(filePath);
+    @Test
+    public void testRealCloud() throws Exception {
+        double[] doubles = processFileAndValidateResult(basePath.resolve("sdc_point_cloud.txt"));
+        System.out.println(Arrays.toString(doubles));
+    }
+
+    @Test
+    public void testPlaneThoughPoints() {
+        double[] a = {1, -2, 0};
+        double[] b = {2, 0, -1};
+        double[] c = {0, -1, 2};
+
+        double[] res = planeThoughPoints(a, b, c);
+        Assert.assertArrayEquals(res, new double[]{5, -1, 3, -7}, 0);
+    }
+
+    public double[] processFileAndValidateResult(Path filePath) throws Exception {
+        Main.LidarInputContainer lidarInputContainer = Main.readLidarInputFile(filePath.toFile());
         double[] solution = Main.solve(lidarInputContainer);
-        Assert.assertTrue(validateSolution(solution, lidarInputContainer));
+        Assert.assertTrue(Main.Utils.validateSolution(solution, lidarInputContainer));
+        return solution;
     }
 
-    private boolean validateSolution(double[] solution, Main.LidarInputContainer input) {
-        int errCtx = 0;
-        for (int i = 0; i < input.n; i++) {
-            double x = input.xArr[i];
-            double y = input.yArr[i];
-            double z = input.zArr[i];
 
-            double err = Math.abs(solution[0] * x + solution[1] * y + solution[2] * z + solution[3]);
-            if (err > input.p) {
-                errCtx++;
-                System.out.printf("error thresold reached (%.6f,%.6f,%.6f) -> %.6f \n", x, y, z, err);
-            }
-            if (errCtx > (input.n / 2)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
