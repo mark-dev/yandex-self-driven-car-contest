@@ -31,21 +31,25 @@ public class Main {
             double b = solution[1];
             double c = solution[2];
             double d = solution[3];
+            if (a != 0 && b != 0 && c != 0 && d != 0) {
+                for (int i = 0; i < input.n; i++) {
 
-            for (int i = 0; i < input.n; i++) {
+                    double x = input.xArr[i];
+                    double y = input.yArr[i];
+                    double z = input.zArr[i];
 
-                double x = input.xArr[i];
-                double y = input.yArr[i];
-                double z = input.zArr[i];
+                    //Расстояние от точки до плоскости
+                    double distance = Math.abs(a * x + b * y + c * z + d) / (Math.sqrt(a * a + b * b + c * c));
 
-                //Расстояние от точки до плоскости
-                double distance = Math.abs(a * x + b * y + c * z + d) / (Math.sqrt(a * a + b * b + c * c));
-
-                if (distance > input.p) {
-                    errCtx++;
+                    if (distance > input.p) {
+                        errCtx++;
+                    }
                 }
+                return errCtx;
+            } else {
+                //Плоскость 0,0,0,0 - это не ответ.
+                return input.n;
             }
-            return errCtx;
         }
     }
 
@@ -211,6 +215,80 @@ public class Main {
         }
     }
 
+    public static class LeastSquareSolution {
+        private static Random RND = new Random();
+
+        private static double[] lsq(Main.LidarInputContainer input, double[] centroid) {
+            double[] x = input.xArr;
+            double[] y = input.yArr;
+            double[] z = input.zArr;
+
+            double xx = 0.0,
+                    xy = 0.0,
+                    xz = 0.0,
+                    yy = 0.0,
+                    yz = 0.0,
+                    zz = 0.0;
+            //Строим плоскость на основе этой точки вида z = T
+            double a = 0;
+            double b = 0;
+            double c = 1;
+            double d = -centroid[2];
+
+            for (int i = 0; i < input.n; i++) {
+                double distance = Math.abs(a * x[i] + b * y[i] + c * z[i] + d) / (Math.sqrt(a * a + b * b + c * c));
+                if (distance <= input.p) {
+                    double[] centroidDiff = new double[]{
+                            x[i] - centroid[0],
+                            y[i] = centroid[1],
+                            z[i] - centroid[2]
+                    };
+                    xx += centroidDiff[0] * centroidDiff[0];
+                    xy += centroidDiff[0] * centroidDiff[1];
+                    xz += centroidDiff[0] * centroidDiff[2];
+
+                    yy += centroidDiff[1] * centroidDiff[1];
+                    yz += centroidDiff[1] * centroidDiff[2];
+
+                    zz += centroidDiff[2] * centroidDiff[2];
+                }
+            }
+
+            double detX = yy * zz - yz * yz;
+            double detY = xx * zz - xz * xz;
+            double detZ = xx * yy - xy * xy;
+
+            double maxDet = Math.max(Math.max(detX, detY), detZ);
+            if (maxDet <= 0.0) {
+                //Нет решения, точки не могут образовать плоскость. Возможно выбрали не ту точку
+                return new double[]{0.0, 0.0, 0.0, 0.0};
+            }
+            if (maxDet == detX) {
+                return new double[]{detX, xz * yz - xy * zz, 1, (xy * yz - xz * yy)};
+            } else if (maxDet == detY) {
+                return new double[]{xz * yz - xy * zz, detY, 1, (xy * xz - yz * xx)};
+            } else {
+                return new double[]{xy * yz - xz * yy, xy * xz - yz * xx, 1, detZ};
+            }
+        }
+
+        public static double[] solve(Main.LidarInputContainer input) {
+
+            double[] solution = null;
+            boolean good = false;
+            int idx = 0;
+            while (!good) {
+                int i = RND.nextInt(input.n);
+                double[] centroid = new double[]{input.xArr[i], input.yArr[i], input.zArr[i]};
+                solution = lsq(input, centroid);
+                good = Main.Utils.validateSolution(solution, input);
+                idx++;
+                if (idx > 100)
+                    throw new RuntimeException("Too many iterations..");
+            }
+            return solution;
+        }
+    }
 
     public static double[] solve(LidarInputContainer input) {
         //RANSAC - эффективней
