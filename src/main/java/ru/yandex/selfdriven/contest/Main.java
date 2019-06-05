@@ -215,6 +215,7 @@ public class Main {
         }
     }
 
+    //Вариации на тему метода наименьших квадратов, но это сделать рабочее решение так и не удалось.
     public static class LeastSquareSolution {
         private static Random RND = new Random();
 
